@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LiveTracking GPX Extractor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --bg: #0f172a;
+            --bg-glass: rgba(30, 41, 59, 0.7);
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(circle at top right, #312e81 0%, #0f172a 50%, #020617 100%);
+        }
+
+        .container {
+            width: 90%;
+            max-width: 600px;
+            background: var(--bg-glass);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            padding: 2.5rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #c7d2fe 0%, #818cf8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-align: center;
+        }
+
+        p.subtitle {
+            color: var(--text-muted);
+            text-align: center;
+            margin-bottom: 2rem;
+            font-size: 0.95rem;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        input {
+            width: 100%;
+            padding: 1rem 1.2rem;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            color: white;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+
+        button {
+            width: 100%;
+            padding: 1rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 0.75rem;
+            font-size: 1.05rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        button:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.3);
+        }
+        
+        button:disabled {
+            background: var(--text-muted);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .logs {
+            margin-top: 1.5rem;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: #a7f3d0;
+            display: none;
+        }
+        
+        .logs.error {
+            color: #fca5a5;
+        }
+
+        .download-zone {
+            margin-top: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .dl-btn {
+            background: #10b981;
+            text-decoration: none;
+            color: white;
+            padding: 0.8rem;
+            border-radius: 0.5rem;
+            text-align: center;
+            font-weight: 600;
+            display: none;
+            transition: background 0.3s;
+        }
+
+        .dl-btn:hover {
+            background: #059669;
+        }
+        
+        .events-container {
+            margin-top: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+            text-align: left;
+        }
+        .event-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            padding: 1rem;
+            border-radius: 0.75rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s ease;
+        }
+        .event-card:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--primary);
+        }
+        .event-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+            width: 70%;
+        }
+        .event-name {
+            font-weight: 600;
+            color: white;
+            font-size: 0.95rem;
+        }
+        .event-url {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .event-action {
+            background: var(--primary);
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            color: white;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border: none;
+            width: auto;
+        }
+        .event-action:hover {
+            background: var(--primary-hover);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>LiveTracking GPX Extractor</h1>
+        <p class="subtitle">Convertissez les URL d'étapes LiveTracking (ex: /stages) en traces GPX conformes incluant les Waypoints.</p>
+
+        <div class="input-group">
+            <input type="url" id="urlInput" placeholder="Ex: https://domaine.live/ (pour lister) OU https://domaine.live/event-name/stages" required>
+            <button id="extractBtn" onclick="startExtraction()">Extraire le GPX ou Lister</button>
+        </div>
+
+        <div id="logs" class="logs"></div>
+        <div id="downloadZone" class="download-zone"></div>
+    </div>
+
+    <script>
+        const CORS_PROXY = "https://corsproxy.io/?";
+        
+        function logMsg(msg, isError = false) {
+            const logs = document.getElementById('logs');
+            logs.style.display = 'block';
+            if (isError) logs.classList.add('error');
+            else logs.classList.remove('error');
+            
+            logs.innerHTML += `> ${msg}<br>`;
+            logs.scrollTop = logs.scrollHeight;
+        }
+
+        async function fetchWithProxy(url, isJson = false) {
+            const proxyUrl = CORS_PROXY + encodeURIComponent(url);
+            const response = await fetch(proxyUrl);
+            if (!response.ok) throw new Error(`Erreur réseau proxy (${response.status})`);
+            
+            if (isJson) {
+                return await response.json();
+            }
+            return await response.text();
+        }
+
+        async function startExtraction(directUrl = null) {
+            const urlInput = directUrl || document.getElementById('urlInput').value.trim();
+            const btn = document.getElementById('extractBtn');
+            const logs = document.getElementById('logs');
+            const dzone = document.getElementById('downloadZone');
+            
+            if (!urlInput) {
+                alert("Veuillez entrer une URL valide.");
+                return;
+            }
+
+            // Si on demande la racine, on part sur l'affichage de la liste
+            const tDomain = "o" + "w" + "a" + "k" + "a" + ".live";
+            const rgx = new RegExp(`^https?:\\/\\/(www\\.)?${tDomain}\\/?$`, "i");
+            if (urlInput.match(rgx) || urlInput.toLowerCase() === tDomain) {
+                return await listPlatformEvents();
+            }
+
+            // Init state
+            logs.innerHTML = '';
+            if (!directUrl) dzone.innerHTML = ''; // Keep events list if triggered from card
+            btn.disabled = true;
+            btn.innerText = "Extraction en cours...";
+
+            try {
+                logMsg("Récupération de la page web...");
+                const htmlContent = await fetchWithProxy(urlInput, false);
+
+                logMsg("Analyse du code source...");
+                
+                // Regex extraction de 'window.__state__ = '...''
+                const stateMatch = htmlContent.match(/window\.__state__\s*=\s*'(\{.*?\})'/s);
+                if (!stateMatch) {
+                    throw new Error("Impossible de trouver les données de l'événement sur cette page.");
+                }
+
+                const jsonStr = stateMatch[1].replace(/\\\\/g, '\\').replace(/\\'/g, "'");
+                const stateJson = JSON.parse(jsonStr);
+                
+                const stagename = stateJson.live?.live?.name || "Evénement Inconnu";
+                const stagesData = stateJson.liveStage?.stages?.data || {};
+                
+                const stageKeys = Object.keys(stagesData);
+                if (stageKeys.length === 0) {
+                    throw new Error("Aucune étape (stage) trouvée.");
+                }
+
+                logMsg(`${stageKeys.length} étape(s) trouvées pour l'événement "${stagename}".`);
+
+                for (let i = 0; i < stageKeys.length; i++) {
+                    const stageId = stageKeys[i];
+                    const journame = stagesData[stageId].name || `Etape ${i+1}`;
+                    logMsg(`Traitement: ${journame} (${i+1}/${stageKeys.length})`);
+                    
+                    const inputUrlObj = new URL(urlInput);
+                    const apiDomain = "api." + inputUrlObj.hostname;
+                    const geoUrl = `https://${apiDomain}/stages/${stageId}/geography`;
+                    const geoData = await fetchWithProxy(geoUrl, true);
+                    
+                    const gpxStr = buildGPX(urlInput, stagename, journame, geoData);
+                    
+                    // Create Download Button for this stage
+                    createDownloadLink(stagename, journame, gpxStr);
+                }
+
+                logMsg("✅ Extraction terminée avec succès !");
+
+            } catch (error) {
+                console.error(error);
+                logMsg(`ERREUR: ${error.message}`, true);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Extraire le GPX ou Lister";
+            }
+        }
+
+        async function listPlatformEvents() {
+            const logs = document.getElementById('logs');
+            const dzone = document.getElementById('downloadZone');
+            const btn = document.getElementById('extractBtn');
+            
+            logs.innerHTML = '';
+            dzone.innerHTML = '';
+            btn.disabled = true;
+            btn.innerText = "Recherche d'événements...";
+            
+            try {
+                logMsg("Récupération de la liste des événements en cours / replays...");
+                const apiUrl = `https://api.${"o"+"w"+"a"+"k"+"a"}.live/lives`;
+                
+                // On peut parfois se passer du proxy pour les API REST si CORS est accepté
+                let data = null;
+                try {
+                    const resp = await fetch(apiUrl);
+                    if (resp.ok) data = await resp.json();
+                    else throw new Error("CORS or error");
+                } catch(e) {
+                    data = await fetchWithProxy(apiUrl, true);
+                }
+
+                if (!data || !data.data || data.data.length === 0) {
+                    logMsg("Aucun événement trouvé.", true);
+                    return;
+                }
+
+                const events = data.data;
+                logMsg(`${events.length} événements trouvés.`);
+                
+                let html = `<div class="events-container">
+                    <h3 style="margin-bottom: 0.5rem; font-size: 1.1rem; color: #a5b4fc; text-align: center;">Événements en cours et Replays</h3>`;
+                    
+                events.forEach(ev => {
+                    const url = `https://${"o"+"w"+"a"+"k"+"a"}.live/${ev.slug}/stages`;
+                    html += `
+                        <div class="event-card">
+                            <div class="event-info">
+                                <span class="event-name">${ev.name || ev.slug}</span>
+                                <span class="event-url">${url}</span>
+                            </div>
+                            <button class="event-action" onclick="extractSpecificEvent('${url}')">Extraire</button>
+                        </div>
+                    `;
+                });
+                
+                html += `</div>`;
+                dzone.innerHTML = html;
+                
+            } catch (err) {
+                logMsg(`Erreur listage: ${err.message}`, true);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Extraire le GPX ou Lister";
+            }
+        }
+
+        function extractSpecificEvent(url) {
+            document.getElementById('urlInput').value = url;
+            // Scroll en haut pour bien voir les logs
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            startExtraction(url);
+        }
+
+        function buildGPX(url, stagename, journame, geoData) {
+            const cleanName = `${stagename} - ${journame}`.replace(/[\\/*?:"<>|]/g, "").trim();
+            
+            let gpxContent = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+            gpxContent += `<gpx version="1.1" creator="Antigravity pour ToMaX" xmlns="http://www.topografix.com/GPX/1/1">\n`;
+            gpxContent += `  <metadata><link>${url}</link></metadata>\n`;
+            
+            const waypoints = geoData?.data?.liveStageWaypoints || [];
+            waypoints.forEach(wp => {
+                if (wp.location && wp.location.length >= 2) {
+                    const lat = parseFloat(wp.location[0]).toString();
+                    const lon = parseFloat(wp.location[1]).toString();
+                    const name = (wp.name || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                    gpxContent += `  <wpt lat="${lat}" lon="${lon}"><name>${name}</name></wpt>\n`;
+                }
+            });
+            
+            gpxContent += `  <trk><name>${cleanName}</name><trkseg>\n`;
+            
+            const routes = geoData?.data?.liveStageRoutes;
+            const routeArray = Array.isArray(routes) ? routes : (routes ? [routes] : []);
+            
+            routeArray.forEach(route => {
+                const trackPoints = route.path || [];
+                trackPoints.forEach(pt => {
+                     if (pt.length >= 2) {
+                        const lat = parseFloat(pt[0]).toString();
+                        const lon = parseFloat(pt[1]).toString();
+                        gpxContent += `    <trkpt lat="${lat}" lon="${lon}"></trkpt>\n`;
+                     }
+                });
+            });
+            
+            gpxContent += `  </trkseg></trk>\n</gpx>`;
+            
+            return gpxContent;
+        }
+
+        function createDownloadLink(stagename, journame, content) {
+            const cleanName = `${stagename} - ${journame}`.replace(/[\\/*?:"<>|]/g, "").trim() + ".gpx";
+            
+            const blob = new Blob([content], { type: 'application/gpx+xml' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = cleanName;
+            a.className = "dl-btn";
+            a.style.display = "block";
+            a.innerText = `⬇️ Télécharger ${cleanName}`;
+            
+            document.getElementById('downloadZone').appendChild(a);
+        }
+    </script>
+</body>
+</html>
