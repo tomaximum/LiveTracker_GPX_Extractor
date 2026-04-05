@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LiveTracker V2 - GPX Extractor</title>
+    
+    <!-- PWA & Mobile Optimization -->
+    <link rel="manifest" href="v2_manifest.json">
+    <meta name="theme-color" content="#6366f1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/tomaximum/LiveTracker_Rally/main/favicon.png">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --bg: #0f172a;
+            --bg-glass: rgba(30, 41, 59, 0.7);
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: rgba(255, 255, 255, 0.1);
+            
+            --status-live: #f97316; /* Orange */
+            --status-soon: #22c55e; /* Green */
+            --status-replay: #3b82f6; /* Blue */
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 2rem 1rem;
+            background: radial-gradient(circle at top right, #312e81 0%, #0f172a 50%, #020617 100%);
+            background-attachment: fixed;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 650px;
+            background: var(--bg-glass);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border);
+            padding: 2.5rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.6s ease-out;
+            margin-bottom: 2rem;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #c7d2fe 0%, #818cf8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-align: center;
+        }
+
+        p.subtitle {
+            color: var(--text-muted);
+            text-align: center;
+            margin-bottom: 2rem;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        input {
+            width: 100%;
+            padding: 1rem 1.2rem;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            color: white;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+
+        button.main-btn {
+            width: 100%;
+            padding: 1rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 0.75rem;
+            font-size: 1.05rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        button.main-btn:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.3);
+        }
+        
+        button:disabled {
+            background: var(--text-muted);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .logs {
+            margin-top: 1.5rem;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: #a7f3d0;
+            display: none;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .logs.error { color: #fca5a5; }
+
+        .download-zone {
+            margin-top: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .dl-btn {
+            background: #10b981;
+            text-decoration: none;
+            color: white;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            text-align: center;
+            font-weight: 600;
+            display: block;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2);
+        }
+
+        .dl-btn:hover {
+            background: #059669;
+            transform: scale(1.02);
+        }
+        
+        /* Category Sections */
+        .category-section {
+            margin-top: 2rem;
+            width: 100%;
+        }
+
+        .category-header {
+            font-size: 0.9rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+            padding-left: 0.5rem;
+            border-left: 3px solid var(--border);
+        }
+
+        .category-header.replay { border-color: var(--status-replay); color: #93c5fd; }
+        .category-header.live { border-color: var(--status-live); color: #fdba74; }
+        .category-header.soon { border-color: var(--status-soon); color: #86efac; }
+
+        .events-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        .event-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            padding: 1.25rem;
+            border-radius: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .event-card:hover {
+            background: rgba(255, 255, 255, 0.07);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .event-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .event-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            flex: 1;
+        }
+
+        .event-name {
+            font-weight: 600;
+            color: white;
+            font-size: 1.05rem;
+        }
+
+        .event-date {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .status-badge {
+            font-size: 0.65rem;
+            font-weight: 800;
+            padding: 0.25rem 0.6rem;
+            border-radius: 2rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .status-badge.live { background: rgba(249, 115, 22, 0.2); color: #fb923c; border: 1px solid rgba(249, 115, 22, 0.3); }
+        .status-badge.soon { background: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); }
+        .status-badge.replay { background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+
+        .event-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .btn-action {
+            flex: 1;
+            padding: 0.6rem;
+            border-radius: 0.6rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+        }
+
+        .btn-preview {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .btn-preview:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-extract {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-extract:hover {
+            background: var(--primary-hover);
+        }
+
+        @media (max-width: 480px) {
+            .container { padding: 1.5rem; }
+            h1 { font-size: 1.5rem; }
+            .event-actions { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>LiveTracker V2</h1>
+        <p class="subtitle">Extraction de traces GPX et Preview d'événements LiveTracking (Owaka).</p>
+
+        <div class="input-group">
+            <input type="url" id="urlInput" placeholder="Ex: https://domaine.live/ (liste complète) OU URL d'étape" required>
+            <button id="extractBtn" class="main-btn" onclick="startExtraction()">Extraire le GPX ou Lister</button>
+        </div>
+
+        <div id="logs" class="logs"></div>
+        <div id="downloadZone" class="download-zone"></div>
+        
+        <div id="eventCategories">
+            <!-- Event categories will be injected here -->
+        </div>
+    </div>
+
+    <script>
+        const CORS_PROXY = "https://corsproxy.io/?";
+        
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./v2_sw.js')
+                    .then(reg => console.log('SW Registered'))
+                    .catch(err => console.log('SW Error', err));
+            });
+        }
+
+        function logMsg(msg, isError = false) {
+            const logs = document.getElementById('logs');
+            logs.style.display = 'block';
+            if (isError) logs.classList.add('error');
+            else logs.classList.remove('error');
+            
+            logs.innerHTML += `> ${msg}<br>`;
+            logs.scrollTop = logs.scrollHeight;
+        }
+
+        async function fetchWithProxy(url, isJson = false) {
+            const proxyUrl = CORS_PROXY + encodeURIComponent(url);
+            const response = await fetch(proxyUrl);
+            if (!response.ok) throw new Error(`Erreur réseau proxy (${response.status})`);
+            
+            if (isJson) return await response.json();
+            return await response.text();
+        }
+
+        async function startExtraction(directUrl = null) {
+            const urlInput = directUrl || document.getElementById('urlInput').value.trim();
+            const btn = document.getElementById('extractBtn');
+            const logs = document.getElementById('logs');
+            const catZone = document.getElementById('eventCategories');
+            const dzone = document.getElementById('downloadZone');
+            
+            if (!urlInput) {
+                alert("Veuillez entrer une URL valide.");
+                return;
+            }
+
+            // Si on demande la racine, on part sur l'affichage de la liste
+            const tDomain = "o" + "w" + "a" + "k" + "a" + ".live";
+            if (urlInput.toLowerCase().includes(tDomain) && !urlInput.includes("/stages")) {
+                return await listPlatformEvents();
+            }
+
+            // Init state
+            logs.innerHTML = '';
+            if (!directUrl) {
+                catZone.innerHTML = '';
+                dzone.innerHTML = '';
+            }
+            btn.disabled = true;
+            btn.innerText = "Extraction en cours...";
+
+            try {
+                logMsg("Récupération de la page web...");
+                const htmlContent = await fetchWithProxy(urlInput, false);
+
+                logMsg("Analyse du code source...");
+                const stateMatch = htmlContent.match(/window\.__state__\s*=\s*'(\{.*?\})'/s);
+                if (!stateMatch) {
+                    throw new Error("Impossible de trouver les données de l'événement sur cette page.");
+                }
+
+                const jsonStr = stateMatch[1].replace(/\\\\/g, '\\').replace(/\\'/g, "'");
+                const stateJson = JSON.parse(jsonStr);
+                
+                const stagename = stateJson.live?.live?.name || "Evénement Inconnu";
+                const stagesData = stateJson.liveStage?.stages?.data || {};
+                
+                const stageKeys = Object.keys(stagesData);
+                if (stageKeys.length === 0) throw new Error("Aucune étape (stage) trouvée.");
+
+                logMsg(`${stageKeys.length} étape(s) trouvées pour "${stagename}".`);
+
+                for (let i = 0; i < stageKeys.length; i++) {
+                    const stageId = stageKeys[i];
+                    const journame = stagesData[stageId].name || `Etape ${i+1}`;
+                    logMsg(`Traitement: ${journame} (${i+1}/${stageKeys.length})`);
+                    
+                    const inputUrlObj = new URL(urlInput);
+                    const apiDomain = "api." + inputUrlObj.hostname;
+                    const geoUrl = `https://${apiDomain}/stages/${stageId}/geography`;
+                    const geoData = await fetchWithProxy(geoUrl, true);
+                    
+                    const gpxStr = buildGPX(urlInput, stagename, journame, geoData);
+                    createDownloadLink(stagename, journame, gpxStr);
+                }
+
+                logMsg("✅ Extraction terminée avec succès !");
+            } catch (error) {
+                console.error(error);
+                logMsg(`ERREUR: ${error.message}`, true);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Extraire le GPX ou Lister";
+            }
+        }
+
+        async function listPlatformEvents() {
+            const logs = document.getElementById('logs');
+            const catZone = document.getElementById('eventCategories');
+            const btn = document.getElementById('extractBtn');
+            const dzone = document.getElementById('downloadZone');
+            
+            logs.innerHTML = '';
+            catZone.innerHTML = '';
+            dzone.innerHTML = '';
+            btn.disabled = true;
+            btn.innerText = "Recherche d'événements...";
+            
+            try {
+                logMsg("Récupération de la liste des événements...");
+                const apiUrl = `https://api.owaka.live/lives`;
+                
+                let data = await fetchWithProxy(apiUrl, true);
+
+                if (!data || !data.data) throw new Error("Aucune donnée reçue.");
+
+                const events = data.data;
+                const now = new Date();
+                
+                const categories = {
+                    replay: [],
+                    live: [],
+                    soon: []
+                };
+
+                events.forEach(ev => {
+                    const start = new Date(ev.startedAt);
+                    const end = new Date(ev.endedAt);
+                    let status = "soon";
+                    
+                    if (now >= start && now <= end) status = "live";
+                    else if (now > end) status = "replay";
+                    
+                    categories[status].push({ ...ev, status });
+                });
+
+                // Display order: Replay, On Live, Soon
+                const order = ['replay', 'live', 'soon'];
+                const labels = { replay: 'Replay', live: 'En Live', soon: 'À Venir' };
+
+                order.forEach(catKey => {
+                    const list = categories[catKey];
+                    if (list.length === 0) return;
+
+                    const section = document.createElement('div');
+                    section.className = 'category-section';
+                    
+                    let html = `<h3 class="category-header ${catKey}">${labels[catKey]} (${list.length})</h3>`;
+                    html += `<div class="events-grid">`;
+                    
+                    list.forEach(ev => {
+                        const url = `https://owaka.live/${ev.slug}/stages`;
+                        const previewUrl = `https://owaka.live/${ev.slug}`;
+                        const dateStr = `Du ${new Date(ev.startedAt).toLocaleDateString()} au ${new Date(ev.endedAt).toLocaleDateString()}`;
+                        
+                        html += `
+                            <div class="event-card">
+                                <div class="event-top">
+                                    <div class="event-info">
+                                        <span class="event-name">${ev.name || ev.slug}</span>
+                                        <span class="event-date">${dateStr}</span>
+                                    </div>
+                                    <span class="status-badge ${catKey}">${labels[catKey]}</span>
+                                </div>
+                                <div class="event-actions">
+                                    <button class="btn-action btn-preview" onclick="window.open('${previewUrl}', '_blank')">🔍 Preview</button>
+                                    <button class="btn-action btn-extract" onclick="extractSpecificEvent('${url}')">⚙️ Extraire</button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    html += `</div>`;
+                    section.innerHTML = html;
+                    catZone.appendChild(section);
+                });
+                
+                logMsg(`${events.length} événements classés.`);
+            } catch (err) {
+                logMsg(`Erreur listage: ${err.message}`, true);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Extraire le GPX ou Lister";
+            }
+        }
+
+        function extractSpecificEvent(url) {
+            document.getElementById('urlInput').value = url;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            startExtraction(url);
+        }
+
+        function buildGPX(url, stagename, journame, geoData) {
+            const cleanName = `${stagename} - ${journame}`.replace(/[\\/*?:"<>|]/g, "").trim();
+            let gpxContent = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+            gpxContent += `<gpx version="1.1" creator="Antigravity pour ToMaX" xmlns="http://www.topografix.com/GPX/1/1">\n`;
+            gpxContent += `  <metadata><link>${url}</link></metadata>\n`;
+            
+            const waypoints = geoData?.data?.liveStageWaypoints || [];
+            waypoints.forEach(wp => {
+                if (wp.location && wp.location.length >= 2) {
+                    const lat = parseFloat(wp.location[0]).toString();
+                    const lon = parseFloat(wp.location[1]).toString();
+                    const name = (wp.name || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                    gpxContent += `  <wpt lat="${lat}" lon="${lon}"><name>${name}</name></wpt>\n`;
+                }
+            });
+            
+            gpxContent += `  <trk><name>${cleanName}</name><trkseg>\n`;
+            const routes = geoData?.data?.liveStageRoutes;
+            const routeArray = Array.isArray(routes) ? routes : (routes ? [routes] : []);
+            
+            routeArray.forEach(route => {
+                (route.path || []).forEach(pt => {
+                     if (pt.length >= 2) {
+                        gpxContent += `    <trkpt lat="${pt[0]}" lon="${pt[1]}"></trkpt>\n`;
+                     }
+                });
+            });
+            
+            gpxContent += `  </trkseg></trk>\n</gpx>`;
+            return gpxContent;
+        }
+
+        function createDownloadLink(stagename, journame, content) {
+            const cleanName = `${stagename} - ${journame}`.replace(/[\\/*?:"<>|]/g, "").trim() + ".gpx";
+            const blob = new Blob([content], { type: 'application/gpx+xml' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = cleanName;
+            a.className = "dl-btn";
+            a.innerText = `⬇️ Télécharger ${cleanName}`;
+            
+            document.getElementById('downloadZone').appendChild(a);
+        }
+    </script>
+</body>
+</html>
