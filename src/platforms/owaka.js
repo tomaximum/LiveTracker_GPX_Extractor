@@ -45,7 +45,7 @@ export class OwakaPlatform {
         return data.map(item => ({
             id: item.id,
             name: item.name,
-            provider: 'owaka',
+            provider: 'Suivi Live',
             slug: item.slug,
             date: new Date(item.startedAt).toLocaleDateString(),
             type: 'event_list'
@@ -66,7 +66,7 @@ export class OwakaPlatform {
         return vehicles.map(v => ({
             id: v.id,
             name: `${v.number} - ${v.name}`,
-            provider: 'owaka',
+            provider: 'Suivi Live',
             category: v.category,
             eventId: event.id,
             type: 'vehicle_trace'

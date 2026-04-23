@@ -40,7 +40,7 @@ class App {
             else if (OwakaPlatform.isMatch(url)) platform = OwakaPlatform;
 
             if (!platform) {
-                throw new Error("Plateforme non reconnue. Seuls Komoot et Owaka sont supportés pour le moment.");
+                throw new Error("Plateforme non reconnue ou URL invalide.");
             }
 
             const results = await platform.extract(url);
@@ -56,7 +56,7 @@ class App {
 
     renderResults(results) {
         const platform = results[0]?.provider;
-        document.getElementById('results-title').textContent = `${results.length} résultat(s) ${platform} trouvé(s)`;
+        document.getElementById('results-title').textContent = `${results.length} résultat(s) trouvé(s)`;
 
         results.forEach((tour, index) => {
             const item = document.createElement('div');
@@ -92,10 +92,10 @@ class App {
 
     async downloadSingle(tour) {
         try {
-            if (tour.provider === 'komoot') {
+            if (tour.provider === 'Parcours') {
                 const gpx = KomootPlatform.generateGPX(tour);
                 GPXEngine.download(tour.name, gpx);
-            } else if (tour.provider === 'owaka') {
+            } else if (tour.provider === 'Suivi Live') {
                 await OwakaPlatform.downloadGPX(tour);
             }
         } catch (err) {
@@ -112,9 +112,9 @@ class App {
         try {
             for (const tour of this.currentTours) {
                 let gpxContent = '';
-                if (tour.provider === 'komoot') {
+                if (tour.provider === 'Parcours') {
                     gpxContent = KomootPlatform.generateGPX(tour);
-                } else if (tour.provider === 'owaka') {
+                } else if (tour.provider === 'Suivi Live') {
                     if (tour.type === 'vehicle_trace') {
                         const points = await OwakaPlatform.fetchVehiclePoints(tour.eventId, tour.id);
                         gpxContent = GPXEngine.generate(tour.name, points);

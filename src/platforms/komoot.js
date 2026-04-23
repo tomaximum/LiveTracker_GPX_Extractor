@@ -53,7 +53,7 @@ export class KomootPlatform {
         return data._embedded.items.map(item => ({
             id: item.id,
             name: item.name,
-            provider: 'komoot',
+            provider: 'Parcours',
             distance: (item.distance / 1000).toFixed(2) + ' km',
             elevation: item.elevation_up + ' m',
             sport: item.sport,
@@ -70,7 +70,7 @@ export class KomootPlatform {
         return [{
             id: data.id,
             name: data.name,
-            provider: 'komoot',
+            provider: 'Parcours',
             distance: (data.distance / 1000).toFixed(2) + ' km',
             elevation: data.elevation_up + ' m',
             sport: data.sport,
@@ -102,7 +102,7 @@ export class KomootPlatform {
         return data._embedded.tours.map(t => ({
             id: t.id,
             name: t.name,
-            provider: 'komoot',
+            provider: 'Parcours',
             distance: (t.distance / 1000).toFixed(2) + ' km',
             elevation: t.elevation_up + ' m',
             sport: t.sport,
