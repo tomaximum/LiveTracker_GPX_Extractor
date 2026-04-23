@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LiveTracking GPX Extractor</title>
+    <title>LiveTracker V1</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -218,8 +218,8 @@
 <body>
 
     <div class="container">
-        <h1>LiveTracking GPX Extractor</h1>
-        <p class="subtitle">Convertissez les URL d'étapes LiveTracking (ex: /stages) en traces GPX conformes incluant les Waypoints.</p>
+        <h1>LiveTracker V1</h1>
+        <p class="subtitle">Convertissez les URL d'étapes de suivi en direct (ex: /stages) en traces GPX conformes incluant les Waypoints.</p>
 
         <div class="input-group">
             <input type="url" id="urlInput" placeholder="Ex: https://domaine.live/ (pour lister) OU https://domaine.live/event-name/stages" required>
@@ -342,7 +342,7 @@
             
             try {
                 logMsg("Récupération de la liste des événements en cours / replays...");
-                const apiUrl = `https://api.${"o"+"w"+"a"+"k"+"a"}.live/lives`;
+                const apiUrl = `https://api.${tDomain}/lives`;
                 
                 // On peut parfois se passer du proxy pour les API REST si CORS est accepté
                 let data = null;
@@ -366,7 +366,7 @@
                     <h3 style="margin-bottom: 0.5rem; font-size: 1.1rem; color: #a5b4fc; text-align: center;">Événements en cours et Replays</h3>`;
                     
                 events.forEach(ev => {
-                    const url = `https://${"o"+"w"+"a"+"k"+"a"}.live/${ev.slug}/stages`;
+                    const url = `https://${tDomain}/${ev.slug}/stages`;
                     html += `
                         <div class="event-card">
                             <div class="event-info">

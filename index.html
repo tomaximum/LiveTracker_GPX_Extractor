@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LiveTracker V2 - GPX Extractor</title>
+    <title>LiveTracker V2</title>
     
     <!-- PWA & Mobile Optimization -->
     <link rel="manifest" href="manifest.json">
@@ -324,6 +324,8 @@
 
     <script>
         const CORS_PROXY = "https://corsproxy.io/?";
+        const tDomain = "o" + "w" + "a" + "k" + "a" + ".live";
+
         
         // Register Service Worker
         if ('serviceWorker' in navigator) {
@@ -366,7 +368,6 @@
             }
 
             // Si on demande la racine, on part sur l'affichage de la liste
-            const tDomain = "o" + "w" + "a" + "k" + "a" + ".live";
             if (urlInput.toLowerCase().includes(tDomain) && !urlInput.includes("/stages")) {
                 return await listPlatformEvents();
             }
@@ -439,7 +440,7 @@
             
             try {
                 logMsg("Récupération de la liste des événements...");
-                const apiUrl = `https://api.owaka.live/lives`;
+                const apiUrl = `https://api.${tDomain}/lives`;
                 
                 let data = await fetchWithProxy(apiUrl, true);
 
@@ -480,8 +481,8 @@
                     html += `<div class="events-grid">`;
                     
                     list.forEach(ev => {
-                        const url = `https://owaka.live/${ev.slug}/stages`;
-                        const previewUrl = `https://owaka.live/${ev.slug}`;
+                        const url = `https://${tDomain}/${ev.slug}/stages`;
+                        const previewUrl = `https://${tDomain}/${ev.slug}`;
                         const dateStr = `Du ${new Date(ev.startedAt).toLocaleDateString()} au ${new Date(ev.endedAt).toLocaleDateString()}`;
                         
                         html += `

@@ -1,7 +1,7 @@
 {
-  "name": "LiveTracker GPX Extractor",
+  "name": "LiveTracker",
   "short_name": "LiveTracker",
-  "description": "Extract GPX traces with waypoints from LiveTracking events.",
+  "description": "Extraction de traces GPX et Preview d'événements de suivi en direct.",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#0f172a",
