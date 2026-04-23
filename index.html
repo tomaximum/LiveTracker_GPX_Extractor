@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LiveTracker GPX Extractor V2</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>LiveTracker GPX Extractor <span class="version-badge">V2.0</span></h1>
+            <p class="subtitle">Extracteur universel de traces pour Owaka, Komoot et plus.</p>
+        </header>
+
+        <main class="extractor-hub">
+            <div class="card" id="main-input-card">
+                <h3>Coller une URL</h3>
+                <p class="tour-meta">Prend en charge Komoot (Collection, Tour, Discover) et Owaka.</p>
+                <div class="input-group">
+                    <input type="text" id="url-input" placeholder="https://www.komoot.com/fr-fr/collection/..." autocomplete="off">
+                    <button id="extract-btn" class="primary">
+                        <span class="btn-text">Extraire</span>
+                        <div class="loader" id="btn-loader"></div>
+                    </button>
+                </div>
+                <div id="error-message" style="color: #ff4d4d; margin-top: 10px; font-size: 0.9rem; display: none;"></div>
+            </div>
+
+            <div id="results-area" class="results-container">
+                <div class="results-header">
+                    <h2 id="results-title">Résultats trouvés</h2>
+                    <button id="download-all-btn" class="primary" style="background: transparent; border: 1px solid var(--accent); color: var(--accent);">
+                        Tout télécharger (ZIP)
+                    </button>
+                </div>
+                <div id="tour-list" class="tour-list">
+                    <!-- Les résultats apparaîtront ici -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script type="module" src="src/app.js"></script>
+</body>
+</html>
